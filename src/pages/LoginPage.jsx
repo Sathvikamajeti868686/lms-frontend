@@ -87,54 +87,69 @@ function LoginPage() {
     }
   }
 
-  async function handleSubmit(event) {
-    event.preventDefault()
-    setErrorMessage('')
+  // ONLY showing the IMPORTANT MODIFIED PART (rest remains same)
 
-    if (!form.email.trim() || !form.password.trim()) {
-      setErrorMessage('Email and password are required.')
-      return
-    }
+async function handleSubmit(event) {
+  event.preventDefault()
+  setErrorMessage('')
 
-    if (form.captcha.trim().toUpperCase() !== captchaText) {
-      setErrorMessage('Captcha verification failed. Please retry.')
-      return
-    }
-
-    if (isTeacherLogin && !form.mfaCode.trim()) {
-      setErrorMessage('MFA is required for admin login.')
-      return
-    }
-
-    if (isTeacherLogin && form.mfaCode.trim().length !== 6) {
-      setErrorMessage('Please enter a valid 6 digit MFA code.')
-      return
-    }
-
-    setSubmitting(true)
-    await new Promise((resolve) => setTimeout(resolve, 350))
-
-    try {
-      const result = await loginUser({ ...form, role })
-      toast.success(result.message)
-      navigate(getDashboardPath(result.user.role))
-    } catch (error) {
-      console.error('Login error:', error)
-      if (error.response) {
-        console.error('Login error.response:', error.response)
-      }
-      const message = error.message || 'Login failed. Please try again.'
-      setErrorMessage(message)
-      toast.error(message)
-      setCaptchaText(makeCaptcha())
-      setForm((current) => ({
-        ...current,
-        captcha: '',
-      }))
-    } finally {
-      setSubmitting(false)
-    }
+  if (!form.email.trim() || !form.password.trim()) {
+    setErrorMessage('Email and password are required.')
+    return
   }
+
+  if (form.captcha.trim().toUpperCase() !== captchaText) {
+    setErrorMessage('Captcha verification failed. Please retry.')
+    return
+  }
+
+  if (isTeacherLogin && !form.mfaCode.trim()) {
+    setErrorMessage('MFA is required for admin login.')
+    return
+  }
+
+  if (isTeacherLogin && form.mfaCode.trim().length !== 6) {
+    setErrorMessage('Please enter a valid 6 digit MFA code.')
+    return
+  }
+
+  setSubmitting(true)
+  await new Promise((resolve) => setTimeout(resolve, 350))
+
+  try {
+    const result = await loginUser({ ...form, role })
+
+    // 🔥🔥🔥 ADD THESE LINES (JWT DEBUG)
+    console.log("✅ FULL LOGIN RESPONSE:", result)
+    console.log("🔐 JWT TOKEN:", result.token)
+    console.log("📦 Stored Token:", localStorage.getItem("lms_auth_token_v1"))
+
+    toast.success(result.message)
+
+    navigate(getDashboardPath(result.user.role))
+
+  } catch (error) {
+    console.error('Login error:', error)
+
+    if (error.response) {
+      console.error('Login error.response:', error.response)
+    }
+
+    const message = error.message || 'Login failed. Please try again.'
+    setErrorMessage(message)
+    toast.error(message)
+
+    setCaptchaText(makeCaptcha())
+
+    setForm((current) => ({
+      ...current,
+      captcha: '',
+    }))
+
+  } finally {
+    setSubmitting(false)
+  }
+}
 
   function openForgotPassword() {
     setResetStep('request')
